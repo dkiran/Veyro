@@ -10,7 +10,7 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS apps (
   package TEXT PRIMARY KEY,
   app TEXT, company TEXT, website TEXT, category TEXT, url TEXT,
-  developer_email TEXT, developer_address TEXT, country TEXT,
+  support_email TEXT, developer_email TEXT, developer_address TEXT, country TEXT,
   crawl_region TEXT, fetched_at TEXT
 );
 """
@@ -23,6 +23,11 @@ def connect(path):
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(apps)")}
+    if "support_email" not in cols:  # older DB: developer_email used to hold the support email
+        conn.execute("ALTER TABLE apps ADD COLUMN support_email TEXT")
+        conn.execute("UPDATE apps SET support_email = developer_email, developer_email = ''")
+        conn.commit()
     return conn
 
 
@@ -63,7 +68,7 @@ def export_csv(conn, path):
         w = csv.writer(f)
         w.writerow(CSV_COLUMNS)
         for r in rows:
-            # "Email" and "Developer email" both come from the developer's public contact email.
-            w.writerow([r["developer_email"], r["app"], r["company"], r["website"], r["category"],
+            # Email = App support email; Developer email = other emails found in developer/about text.
+            w.writerow([r["support_email"], r["app"], r["company"], r["website"], r["category"],
                         r["url"], r["developer_email"], r["developer_address"], r["country"]])
     return len(rows)

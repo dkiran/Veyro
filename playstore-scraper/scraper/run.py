@@ -4,12 +4,16 @@ import time
 
 from . import db
 from .country import country_from_address
+from .emails import find_emails
 
 log = logging.getLogger("playstore")
 
 
 def to_row(package, d, region):
     address = (d.get("developerAddress") or "").replace("\n", ", ")
+    support = (d.get("developerEmail") or "").strip()
+    # Library has no "About the developer" field; use that text if present, else the app description.
+    about = d.get("developerDescription") or d.get("description") or ""
     return {
         "package": package,
         "app": d.get("title") or "",
@@ -17,7 +21,8 @@ def to_row(package, d, region):
         "website": d.get("developerWebsite") or "",
         "category": d.get("genre") or "",
         "url": d.get("url") or f"https://play.google.com/store/apps/details?id={package}",
-        "developer_email": d.get("developerEmail") or "",
+        "support_email": support,
+        "developer_email": ", ".join(find_emails(about, exclude=[support])),
         "developer_address": address,
         "country": country_from_address(address),
         "crawl_region": region,

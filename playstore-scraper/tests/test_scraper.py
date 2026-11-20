@@ -17,7 +17,7 @@ class Fake:
             raise RuntimeError("blocked")
         return {"title": "A", "developer": "Acme", "developerWebsite": "https://acme.io",
                 "genre": "Tools", "url": "https://play.google.com/store/apps/details?id=com.a",
-                "developerEmail": "dev@acme.io", "developerAddress": "1 Main St\nNairobi, Kenya"}
+                "developerEmail": "support@acme.io", "description": "Contact us: support@acme.io or ceo@acme.io, ceo@ACME.io.", "developerAddress": "1 Main St\nNairobi, Kenya"}
 
 
 def test_country():
@@ -33,7 +33,8 @@ def test_scrape_exports_columns_and_skips_fresh(tmp_path):
     rows = list(csv.DictReader(open(tmp_path / "a.csv")))
     assert list(rows[0]) == ["Email", "App", "Company", "Website", "Category",
                              "Play Store URL", "Developer email", "Developer address", "Country"]
-    assert rows[0]["Country"] == "Kenya" and rows[0]["Email"] == "dev@acme.io"
+    assert rows[0]["Country"] == "Kenya" and rows[0]["Email"] == "support@acme.io"
+    assert rows[0]["Developer email"] == "ceo@acme.io"
     calls = f.detail_calls
     scrape(CFG(tmp_path), f, sleep=lambda s: None)  # com.a fresh -> only com.b retried
     assert f.detail_calls == calls + 1
