@@ -17,7 +17,7 @@ class Fake:
             raise RuntimeError("blocked")
         return {"title": "A", "developer": "Acme", "developerWebsite": "https://acme.io",
                 "genre": "Tools", "url": "https://play.google.com/store/apps/details?id=com.a",
-                "developerEmail": "support@acme.io", "description": "Contact us: support@acme.io or ceo@acme.io, ceo@ACME.io.", "developerAddress": "1 Main St\nNairobi, Kenya"}
+                "developerEmail": "support@acme.io", "developerEmails": ["ceo@acme.io"], "developerAddress": "1 Main St\nNairobi, Kenya"}
 
 
 def test_country():
@@ -38,3 +38,9 @@ def test_scrape_exports_columns_and_skips_fresh(tmp_path):
     calls = f.detail_calls
     scrape(CFG(tmp_path), f, sleep=lambda s: None)  # com.a fresh -> only com.b retried
     assert f.detail_calls == calls + 1
+
+
+def test_page_email_extraction():
+    from scraper.fetch import email_strings
+    blob = [["desc: mail me at x@y.com"], [["a@b.com"], ["Support@B.com", "c@d.org"]]]
+    assert [e for _, e in email_strings(blob)] == ["a@b.com", "Support@B.com", "c@d.org"]

@@ -13,7 +13,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="config.json")
     ap.add_argument("--once", action="store_true", help="run one scrape and exit (use with system cron)")
+    ap.add_argument("--inspect", metavar="PACKAGE", help="print where emails sit in a page's data, then exit")
     args = ap.parse_args()
+    if args.inspect:
+        for key, path, email in PlayFetcher().inspect(args.inspect):
+            print(key, path, email)
+        return
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     cfg = load_config(args.config)
     job = lambda: scrape(cfg, PlayFetcher())
