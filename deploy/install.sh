@@ -5,7 +5,7 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DOMAIN_NAME="veyrotrack.com"
+DOMAIN_NAME="track.veyrotrack.com"
 WEBROOT=/var/www/veyro
 
 say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }

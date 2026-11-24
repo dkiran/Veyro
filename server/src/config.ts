@@ -8,7 +8,7 @@ export const config = {
   // Behind a reverse proxy set HOST=127.0.0.1 so the API is not reachable directly from the internet.
   host: process.env.HOST ?? '0.0.0.0',
   // Browser origins allowed to call the API cross-origin. Dev: any. Production: none (same-origin via the proxy)
-  // unless CORS_ORIGIN lists them, e.g. "https://veyrotrack.com,https://app.veyrotrack.com".
+  // unless CORS_ORIGIN lists them, e.g. "https://track.veyrotrack.com".
   corsOrigin: (process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map((s) => s.trim()).filter(Boolean) : process.env.NODE_ENV === 'production' ? false : true) as boolean | string[],
   // A vehicle with no fix for this long is shown as offline.
   offlineAfterMs: 10 * 60_000,

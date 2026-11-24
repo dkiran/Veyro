@@ -1,6 +1,6 @@
-# Caddy gets and renews the HTTPS certificate for this domain automatically.
-# To use a subdomain instead (e.g. app.veyrotrack.com), change the two hostnames below.
-veyrotrack.com {
+# Caddy gets and renews the HTTPS certificate for this hostname automatically.
+# This server only handles the portal. The main website (veyrotrack.com) lives elsewhere.
+track.veyrotrack.com {
 	encode zstd gzip
 	root * /var/www/veyro
 
@@ -27,8 +27,4 @@ veyrotrack.com {
 		try_files {path} /index.html
 		file_server
 	}
-}
-
-www.veyrotrack.com {
-	redir https://veyrotrack.com{uri} permanent
 }

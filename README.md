@@ -42,4 +42,4 @@ Prereqs: Node 22, Docker (for Postgres), a server with ports 80 and 443 open, an
 ```bash
 git pull && ./deploy/install.sh
 ```
-This builds the web app into `/var/www/veyro`, runs the API as the `veyro-api` systemd service on `127.0.0.1:4000`, and installs Caddy, which serves the site and gets a free HTTPS certificate automatically. Re-run it after every `git pull`. To use another domain or a subdomain, edit `deploy/Caddyfile` and `DOMAIN_NAME` in `deploy/install.sh`. In production the API only accepts same-origin browser calls unless `CORS_ORIGIN` is set.
+This builds the web app into `/var/www/veyro`, runs the API as the `veyro-api` systemd service on `127.0.0.1:4000`, and installs Caddy, which serves the site and gets a free HTTPS certificate automatically. Re-run it after every `git pull`. The portal is served at `track.veyrotrack.com` (the main website is hosted separately). To use another hostname, edit `deploy/Caddyfile` and `DOMAIN_NAME` in `deploy/install.sh`. In production the API only accepts same-origin browser calls unless `CORS_ORIGIN` is set.
