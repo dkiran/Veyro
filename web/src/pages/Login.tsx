@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { LANGUAGES } from '../i18n';
+import LoginBackground from './LoginBackground';
 
 export default function Login() {
   const { t, i18n } = useTranslation();
@@ -22,6 +23,7 @@ export default function Login() {
   }
   return (
     <div className="login">
+      <LoginBackground />
       <form className="card" onSubmit={submit}>
         <div className="brand big">▲ {t('app.name')}</div>
         {signup && <>
