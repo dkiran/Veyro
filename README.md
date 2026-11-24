@@ -18,6 +18,10 @@ cd server && npm test                     # integration tests (needs Postgres)
 - **Ingest** `POST /api/ingest` (`x-device-key` header): batched, idempotent (`vehicle_id, ts` unique), late/out-of-order fixes kept in history without rewinding live state, GPS-jump filtering, future timestamps rejected.
 - **Live**: `GET /api/live/snapshot` + WebSocket `/api/live/ws?token=` pushes each position to the org's browsers.
 - **History**: `GET /api/vehicles/:id/history` (server-side downsampling), `GET /api/vehicles/:id/trips`. Trips are derived automatically (start on movement, end on ignition-off or 5 min stationary) with distance, max speed and driver.
+- **Dashboard** (landing page after login, `GET /api/dashboard?days=1|7|30|90`): live fleet status tiles + donut (running / idle / stopped / no GPS), fleet utilization, trips, driver behaviour and fuel, with auto-refresh. Everything is computed in SQL from positions, trips and vehicle state.
+  - *Driver behaviour* is derived from GPS speed changes (overspeed > 80 km/h, harsh braking/acceleration >= 8 km/h per second). Exact events need an AI dashcam or accelerometer. The score formula is `100 - 4 x events per 100 km`.
+  - *Fuel is an estimate* (distance / typical km-per-litre by vehicle type + idle burn, at reference India prices in `server/src/fuel.ts`) until fuel sensors or fuel cards are connected. Currency is INR for now.
+  - Dashboard text is translated into English and Hindi; other languages fall back to English until translated.
 - **i18n**: English, Hindi, Marathi, Tamil, Telugu, Bengali, Arabic (RTL), Spanish. Add a language by dropping `web/src/i18n/locales/<code>.json` (copy `en.json`) and adding its native name in `i18n/index.ts`; missing keys fall back to English. Dates/numbers use `Intl`. Drivers carry a `preferred_language` for the future WhatsApp/voice agents.
 
 ## Known limits / next steps

@@ -10,6 +10,9 @@ export const config = {
   // A trip ends after the vehicle has been stationary this long (or ignition goes off).
   tripIdleEndMs: 5 * 60_000,
   movingSpeedKmh: 2,
+  // Driver-behaviour thresholds (derived from consecutive GPS fixes; no accelerometer yet).
+  overspeedKmh: 80,
+  harshKmhPerSec: 8, // ~0.23 g
 };
 if (process.env.NODE_ENV === 'production' && config.jwtSecret === 'dev-secret-change-me') {
   throw new Error('JWT_SECRET must be set in production');

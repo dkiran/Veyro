@@ -99,3 +99,36 @@ test('history downsampling keeps first and last', async () => {
   assert.equal(r.points[0].lat, 12);
   assert.ok(Math.abs(r.points.at(-1).lat - (12 + 299e-4)) < 1e-9);
 });
+
+test('dashboard: status, trips, behaviour events, fuel, tenant scoping', async () => {
+  const h = await signup();
+  const drv = (await j(h, 'POST', '/api/drivers', { name: 'Test Driver' })).json();
+  const v = (await j(h, 'POST', '/api/vehicles', { reg_number: 'DB11AA0001', type: 'truck', driver_id: drv.id })).json();
+  const d = (await j(h, 'POST', '/api/devices', { imei: imeiOf(), vehicle_id: v.id })).json();
+  await j(h, 'POST', '/api/vehicles', { reg_number: 'DB11AA0002' }); // never reports -> "no GPS"
+
+  // fixes 3 s apart: one overspeed (70->90), one harsh brake (90->30), one harsh accel (30->60)
+  const speeds = [0, 20, 40, 60, 70, 90, 90, 30, 30, 60, 60];
+  const t0 = Date.now() - 30 * 60_000;
+  const positions = speeds.map((s, i) => ({ ts: new Date(t0 + i * 3000).toISOString(), lat: 19 + i * 0.0008, lng: 72.8, speed_kmh: s, ignition: true }));
+  await app.inject({ method: 'POST', url: '/api/ingest', headers: { 'x-device-key': d.api_key }, payload: { imei: d.imei, positions } });
+
+  const r = (await j(h, 'GET', '/api/dashboard?days=7')).json();
+  assert.equal(r.status.total, 2);
+  assert.equal(r.status.no_gps, 2); // reporting vehicle's last fix is 30 min old -> offline; other never reported
+  assert.equal(r.behaviour.overspeed, 1);
+  assert.equal(r.behaviour.harsh_braking, 1);
+  assert.equal(r.behaviour.harsh_acceleration, 1);
+  assert.equal(r.trips.total, 1);
+  assert.ok(r.trips.km > 0.3);
+  assert.ok(r.fuel.estimated && r.fuel.cost > 0);
+  assert.equal(r.utilization.daily.length, 7);
+  assert.equal(r.utilization.used_vehicles, 1);
+  assert.equal(r.behaviour.drivers[0].name, 'Test Driver');
+
+  // another tenant sees nothing of this
+  const other = (await j(await signup(), 'GET', '/api/dashboard?days=7')).json();
+  assert.equal(other.trips.total, 0);
+  assert.equal(other.status.total, 0);
+  assert.equal((await j(h, 'GET', '/api/dashboard?days=5')).statusCode, 400);
+});

@@ -9,6 +9,7 @@ import { masterRoutes } from './routes/masters.js';
 import { liveRoutes } from './routes/live.js';
 import { historyRoutes } from './routes/history.js';
 import { ingestRoutes } from './routes/ingest.js';
+import { dashboardRoutes } from './routes/dashboard.js';
 
 export interface AuthUser { uid: string; org: string; role: 'admin' | 'manager' | 'viewer' }
 declare module '@fastify/jwt' {
@@ -48,5 +49,6 @@ export async function buildApp() {
   await app.register(liveRoutes);
   await app.register(historyRoutes);
   await app.register(ingestRoutes);
+  await app.register(dashboardRoutes);
   return app;
 }

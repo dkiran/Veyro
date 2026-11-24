@@ -1,7 +1,7 @@
 import L from 'leaflet';
 
 export const STATUS_COLOR: Record<string, string> = {
-  moving: '#16a34a', idle: '#f59e0b', stopped: '#dc2626', offline: '#6b7280', unknown: '#6b7280',
+  moving: '#0ca30c', idle: '#fab219', stopped: '#d03b3b', offline: '#898781', unknown: '#898781',
 };
 
 export function makeMap(el: HTMLElement) {

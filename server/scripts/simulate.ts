@@ -32,7 +32,7 @@ async function auth() {
   }
 }
 
-interface Sim { imei: string; key: string; lat: number; lng: number; heading: number; speed: number; dest: [number, number]; t: number; stopUntil: number }
+interface Sim { idleUntil: number; imei: string; key: string; lat: number; lng: number; heading: number; speed: number; dest: [number, number]; t: number; stopUntil: number }
 
 function step(s: Sim, dtSec: number) {
   if (s.t < s.stopUntil) { s.speed = 0; s.t += dtSec * 1000; return; }
@@ -40,15 +40,16 @@ function step(s: Sim, dtSec: number) {
   const distKm = Math.hypot(dLat * 111, dLng * 111 * Math.cos(s.lat * Math.PI / 180));
   if (distKm < 1) { // arrived: rest 10-20 min, then pick a new destination
     s.stopUntil = s.t + (600 + Math.random() * 600) * 1000;
+    s.idleUntil = s.t + (60 + Math.random() * 180) * 1000; // engine left running for 1-4 min, then off
     const c = cities[Math.floor(Math.random() * cities.length)]; s.dest = [c[1], c[2]];
     s.speed = 0; s.t += dtSec * 1000; return;
   }
   s.heading = (Math.atan2(dLng * Math.cos(s.lat * Math.PI / 180), dLat) * 180 / Math.PI + 360) % 360;
-  s.speed = Math.max(25, Math.min(85, s.speed + (Math.random() - 0.5) * 8 || 55));
+  s.speed = Math.max(25, Math.min(72, s.speed + (Math.random() - 0.5) * 8 || 55)); // cruise below the overspeed limit
   const k = (s.speed * dtSec / 3600) / distKm;
   s.lat += dLat * k; s.lng += dLng * k; s.t += dtSec * 1000;
 }
-const fix = (s: Sim) => ({ ts: new Date(s.t).toISOString(), lat: +s.lat.toFixed(6), lng: +s.lng.toFixed(6), speed_kmh: +s.speed.toFixed(1), heading: +s.heading.toFixed(0), ignition: s.speed > 0 || undefined });
+const fix = (s: Sim) => ({ ts: new Date(s.t).toISOString(), lat: +s.lat.toFixed(6), lng: +s.lng.toFixed(6), speed_kmh: +s.speed.toFixed(1), heading: +s.heading.toFixed(0), ignition: s.speed > 0 || s.t < s.idleUntil });
 
 async function main() {
   const token = await auth(); const h = { authorization: `Bearer ${token}` };
@@ -66,13 +67,18 @@ async function main() {
       dev = (await call('/api/devices', 'GET', undefined, h)).find((d: any) => d.vehicle_id === v.id);
     }
     const c = cities[i % cities.length], d = cities[(i * 3 + 1) % cities.length];
-    sims.push({ imei: dev.imei, key: dev.api_key, lat: c[1], lng: c[2], heading: 0, speed: 50, dest: [d[1], d[2]], t: Date.now() - BACKFILL_H * 3600_000, stopUntil: 0 });
+    sims.push({ imei: dev.imei, key: dev.api_key, lat: c[1], lng: c[2], heading: 0, speed: 50, dest: [d[1], d[2]], t: Date.now() - BACKFILL_H * 3600_000, stopUntil: 0, idleUntil: 0 });
   }
   console.log(`Backfilling ${BACKFILL_H}h for ${sims.length} vehicles...`);
   for (const s of sims) {
     const batch: any[] = [];
     while (s.t < Date.now() - 5000) {
       step(s, 10); batch.push(fix(s));
+      if (s.speed > 45 && Math.random() < 0.0015) { // harsh braking: -40 km/h in 3 s
+        const f = fix(s); batch.push({ ...f, ts: new Date(s.t + 3000).toISOString(), speed_kmh: f.speed_kmh - 40 });
+      } else if (s.speed > 30 && Math.random() < 0.001) { // hard acceleration into overspeed
+        const f = fix(s); batch.push({ ...f, ts: new Date(s.t + 3000).toISOString(), speed_kmh: Math.min(98, f.speed_kmh + 40) });
+      }
       if (batch.length === 500) { await call('/api/ingest', 'POST', { imei: s.imei, positions: batch.splice(0) }, { 'x-device-key': s.key }); }
     }
     if (batch.length) await call('/api/ingest', 'POST', { imei: s.imei, positions: batch }, { 'x-device-key': s.key });
@@ -81,6 +87,8 @@ async function main() {
   setInterval(async () => {
     for (const s of sims) {
       s.t = Date.now(); step(s, 3); s.t = Date.now();
+      if (s.speed > 45 && Math.random() < 0.002) s.speed -= 40;      // harsh braking
+      else if (s.speed > 0 && Math.random() < 0.001) s.speed = Math.min(98, s.speed + 40); // hard acceleration / overspeed
       await call('/api/ingest', 'POST', { imei: s.imei, positions: [fix(s)] }, { 'x-device-key': s.key }).catch((e) => console.error(e.message));
     }
   }, 3000);

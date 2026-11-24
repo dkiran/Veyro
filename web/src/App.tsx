@@ -1,9 +1,11 @@
+import { Suspense, lazy } from 'react';
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './auth';
 import { api } from './api';
 import { LANGUAGES } from './i18n';
 import Login from './pages/Login';
+const Dashboard = lazy(() => import('./pages/Dashboard')); // charts library is only loaded when needed
 import Live from './pages/Live';
 import History from './pages/History';
 import { Vehicles, Drivers, Devices } from './pages/Masters';
@@ -17,6 +19,7 @@ function Shell() {
       <aside className="side">
         <div className="brand">▲ {t('app.name')}</div>
         <nav>
+          <NavLink to="/dashboard">{t('nav.dashboard')}</NavLink>
           <NavLink to="/live">{t('nav.live')}</NavLink>
           <NavLink to="/history">{t('nav.history')}</NavLink>
           <NavLink to="/vehicles">{t('nav.vehicles')}</NavLink>
@@ -33,12 +36,13 @@ function Shell() {
       </aside>
       <main className="main">
         <Routes>
+          <Route path="/dashboard" element={<Suspense fallback={null}><Dashboard /></Suspense>} />
           <Route path="/live" element={<Live />} />
           <Route path="/history" element={<History />} />
           <Route path="/vehicles" element={<Vehicles />} />
           <Route path="/drivers" element={<Drivers />} />
           <Route path="/devices" element={<Devices />} />
-          <Route path="*" element={<Navigate to="/live" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
     </div>
@@ -50,7 +54,7 @@ export default function App() {
   if (!ready) return null;
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate to="/live" replace /> : <Login />} />
+      <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/*" element={user ? <Shell /> : <Navigate to="/login" replace />} />
     </Routes>
   );
