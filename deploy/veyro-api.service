@@ -8,7 +8,8 @@ Type=simple
 User=@USER@
 WorkingDirectory=@REPO@/server
 Environment=NODE_ENV=production
-Environment=HOST=127.0.0.1
+Environment=HOST=@HOST@
+@EXTRA_ENV@
 Environment=PORT=4000
 # DATABASE_URL, JWT_SECRET, ANTHROPIC_API_KEY ... are read from @REPO@/server/.env
 ExecStart=@NODE@ node_modules/tsx/dist/cli.mjs src/index.ts

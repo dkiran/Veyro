@@ -13,6 +13,9 @@ import { dashboardRoutes } from './routes/dashboard.js';
 import { assistantRoutes } from './routes/assistant.js';
 import { tripRoutes } from './routes/trips.js';
 import type { AiClient } from './assistant/chat.js';
+import fastifyStatic from '@fastify/static';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 export interface AuthUser { uid: string; org: string; role: 'admin' | 'manager' | 'viewer' }
 declare module '@fastify/jwt' {
@@ -22,7 +25,7 @@ declare module 'fastify' {
   interface FastifyInstance { auth: (req: any, reply: any) => Promise<void>; adminOnly: (req: any, reply: any) => Promise<void> }
 }
 
-export async function buildApp(opts: { aiClient?: () => AiClient } = {}) {
+export async function buildApp(opts: { aiClient?: () => AiClient; webDist?: string } = {}) {
   const app = Fastify({ logger: process.env.NODE_ENV !== 'test' });
   await app.register(cors, { origin: config.corsOrigin });
   await app.register(jwt, { secret: config.jwtSecret, sign: { expiresIn: '12h' } });
@@ -55,5 +58,17 @@ export async function buildApp(opts: { aiClient?: () => AiClient } = {}) {
   await app.register(dashboardRoutes);
   await app.register(tripRoutes);
   await app.register(assistantRoutes, { client: opts.aiClient });
+
+  // Optionally serve the built web app (single-page app: unknown non-API paths return index.html).
+  if (opts.webDist && existsSync(resolve(opts.webDist, 'index.html'))) {
+    await app.register(fastifyStatic, {
+      root: resolve(opts.webDist), wildcard: false, index: ['index.html'],
+      setHeaders: (res, path) => res.header('cache-control', path.includes('/assets/') ? 'public, max-age=31536000, immutable' : 'no-cache'),
+    });
+    app.setNotFoundHandler((req, reply) => {
+      if (req.method === 'GET' && !req.url.startsWith('/api/')) return reply.sendFile('index.html');
+      return reply.code(404).send({ error: 'not_found' });
+    });
+  }
   return app;
 }

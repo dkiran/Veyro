@@ -43,3 +43,6 @@ Prereqs: Node 22, Docker (for Postgres), a server with ports 80 and 443 open, an
 git pull && ./deploy/install.sh
 ```
 This builds the web app into `/var/www/veyro`, runs the API as the `veyro-api` systemd service on `127.0.0.1:4000`, and installs Caddy, which serves the site and gets a free HTTPS certificate automatically. Re-run it after every `git pull`. The portal is served at `track.veyrotrack.com` (the main website is hosted separately). To use another hostname, edit `deploy/Caddyfile` and `DOMAIN_NAME` in `deploy/install.sh`. In production the API only accepts same-origin browser calls unless `CORS_ORIGIN` is set.
+
+### Sharing the server with another app (shared proxy)
+If something else (for example another Docker stack with its own Caddy) already owns ports 80/443, do not install a second web server. Run `./deploy/install.sh --shared-proxy`: the API then serves the web app on host port 4000 and you add the block from `deploy/shared-proxy.Caddyfile.snippet` to the existing proxy. Keep port 4000 closed in the firewall / security group so it is only reachable through that proxy.

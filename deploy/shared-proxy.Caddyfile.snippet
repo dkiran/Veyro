@@ -1,0 +1,16 @@
+# Add this block to the Caddyfile of the Caddy that already owns ports 80/443 (e.g. a Caddy running in Docker).
+# That Caddy container also needs:   extra_hosts: ["host.docker.internal:host-gateway"]
+# Veyro is then started with:        ./deploy/install.sh --shared-proxy      (API listens on host port 4000)
+track.veyrotrack.com {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+	reverse_proxy host.docker.internal:4000 {
+		flush_interval -1
+	}
+}

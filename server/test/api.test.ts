@@ -224,3 +224,23 @@ test('vehicle image_url validation + trips list', async () => {
   assert.equal(t.total, 1); assert.equal(t.rows[0].reg_number, 'IM11AA0001'); assert.ok(t.total_km > 2);
   assert.equal((await j(await signup(), 'GET', '/api/trips?days=7')).json().total, 0);
 });
+
+test('API can serve the built web app (SPA fallback) without touching /api', async () => {
+  const { mkdtempSync, mkdirSync, writeFileSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os'); const { join } = await import('node:path');
+  const dir = mkdtempSync(join(tmpdir(), 'veyro-web-')); mkdirSync(join(dir, 'assets'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html><title>Veyro</title><div id="root"></div>');
+  writeFileSync(join(dir, 'assets', 'app-abc123.js'), 'console.log(1)');
+  const web = await buildApp({ webDist: dir });
+  const home = await web.inject({ url: '/' });
+  assert.equal(home.statusCode, 200); assert.ok(home.body.includes('id="root"')); assert.equal(home.headers['cache-control'], 'no-cache');
+  const deep = await web.inject({ url: '/vehicles/some/page' });
+  assert.equal(deep.statusCode, 200); assert.ok(deep.body.includes('id="root"'), 'SPA fallback');
+  const asset = await web.inject({ url: '/assets/app-abc123.js' });
+  assert.equal(asset.statusCode, 200); assert.ok(String(asset.headers['cache-control']).includes('immutable'));
+  assert.equal((await web.inject({ url: '/api/nope' })).statusCode, 404);
+  assert.equal((await web.inject({ url: '/api/health' })).json().ok, true);
+  assert.equal((await web.inject({ url: '/api/vehicles' })).statusCode, 401);
+  await web.close();
+  assert.equal((await app.inject({ url: '/' })).statusCode, 404, 'no web app unless configured');
+});
