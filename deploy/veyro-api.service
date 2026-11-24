@@ -1,0 +1,21 @@
+[Unit]
+Description=Veyro API
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@USER@
+WorkingDirectory=@REPO@/server
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=4000
+# DATABASE_URL, JWT_SECRET, ANTHROPIC_API_KEY ... are read from @REPO@/server/.env
+ExecStart=@NODE@ node_modules/tsx/dist/cli.mjs src/index.ts
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

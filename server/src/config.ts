@@ -5,6 +5,11 @@ export const config = {
   databaseUrl: process.env.DATABASE_URL ?? 'postgres://veyro:veyro@localhost:5432/veyro',
   jwtSecret: process.env.JWT_SECRET ?? 'dev-secret-change-me',
   port: Number(process.env.PORT ?? 4000),
+  // Behind a reverse proxy set HOST=127.0.0.1 so the API is not reachable directly from the internet.
+  host: process.env.HOST ?? '0.0.0.0',
+  // Browser origins allowed to call the API cross-origin. Dev: any. Production: none (same-origin via the proxy)
+  // unless CORS_ORIGIN lists them, e.g. "https://veyrotrack.com,https://app.veyrotrack.com".
+  corsOrigin: (process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map((s) => s.trim()).filter(Boolean) : process.env.NODE_ENV === 'production' ? false : true) as boolean | string[],
   // A vehicle with no fix for this long is shown as offline.
   offlineAfterMs: 10 * 60_000,
   // A trip ends after the vehicle has been stationary this long (or ignition goes off).

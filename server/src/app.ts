@@ -24,7 +24,7 @@ declare module 'fastify' {
 
 export async function buildApp(opts: { aiClient?: () => AiClient } = {}) {
   const app = Fastify({ logger: process.env.NODE_ENV !== 'test' });
-  await app.register(cors, { origin: true });
+  await app.register(cors, { origin: config.corsOrigin });
   await app.register(jwt, { secret: config.jwtSecret, sign: { expiresIn: '12h' } });
   await app.register(websocket);
 

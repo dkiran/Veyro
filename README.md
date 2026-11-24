@@ -36,3 +36,10 @@ cd server && npm test                     # integration tests (needs Postgres)
 
 ## Roadmap (not built yet)
 Geofences & alerts → AI agents (an agent layer that consumes the event stream and uses the same API as tools: anomaly/idle/route-deviation, maintenance, driver scoring) → AI dashcam (video events as `positions.attrs`/new `events` table) → mobile app → WhatsApp bot → voice agent (multilingual, uses driver `preferred_language`).
+
+## Deploying to your own domain (single server)
+Prereqs: Node 22, Docker (for Postgres), a server with ports 80 and 443 open, and a DNS **A record** for your domain pointing at the server's (Elastic) IP.
+```bash
+git pull && ./deploy/install.sh
+```
+This builds the web app into `/var/www/veyro`, runs the API as the `veyro-api` systemd service on `127.0.0.1:4000`, and installs Caddy, which serves the site and gets a free HTTPS certificate automatically. Re-run it after every `git pull`. To use another domain or a subdomain, edit `deploy/Caddyfile` and `DOMAIN_NAME` in `deploy/install.sh`. In production the API only accepts same-origin browser calls unless `CORS_ORIGIN` is set.

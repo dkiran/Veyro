@@ -1,0 +1,34 @@
+# Caddy gets and renews the HTTPS certificate for this domain automatically.
+# To use a subdomain instead (e.g. app.veyrotrack.com), change the two hostnames below.
+veyrotrack.com {
+	encode zstd gzip
+	root * /var/www/veyro
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# API + live-tracking WebSocket + AI chat stream go to the Node service (never cached, never buffered).
+	handle /api/* {
+		reverse_proxy 127.0.0.1:4000 {
+			flush_interval -1
+		}
+	}
+
+	# The web app: hashed assets cache for a year, index.html is always revalidated.
+	handle {
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		header /index.html Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+www.veyrotrack.com {
+	redir https://veyrotrack.com{uri} permanent
+}

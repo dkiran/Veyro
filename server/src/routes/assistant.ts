@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { pool } from '../db.js';
+import { config } from '../config.js';
 import { aiConfigured, runChat, type AiClient } from '../assistant/chat.js';
 
 const body = z.object({
@@ -28,7 +29,8 @@ export async function assistantRoutes(app: FastifyInstance, opts: { client?: () 
     // Server-sent events. We bypass Fastify's reply handling, so set CORS ourselves.
     reply.hijack();
     const res = reply.raw;
-    const origin = req.headers.origin;
+    const o = req.headers.origin;
+    const origin = o && (config.corsOrigin === true || (Array.isArray(config.corsOrigin) && config.corsOrigin.includes(o))) ? o : undefined;
     res.writeHead(200, {
       'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-cache, no-transform', connection: 'keep-alive', 'x-accel-buffering': 'no',
       ...(origin ? { 'access-control-allow-origin': origin, vary: 'Origin' } : {}),
