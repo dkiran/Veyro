@@ -1,3 +1,6 @@
+// Load server/.env if present (Node 20.12+/22). Real environment variables take precedence.
+try { process.loadEnvFile(); } catch { /* no .env file */ }
+
 export const config = {
   databaseUrl: process.env.DATABASE_URL ?? 'postgres://veyro:veyro@localhost:5432/veyro',
   jwtSecret: process.env.JWT_SECRET ?? 'dev-secret-change-me',
