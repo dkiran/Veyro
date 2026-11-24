@@ -2,6 +2,7 @@
 Description=Caddy web server (HTTPS for Veyro)
 After=network-online.target
 Wants=network-online.target
+StartLimitIntervalSec=0
 
 [Service]
 Type=notify
@@ -9,6 +10,9 @@ User=caddy
 Group=caddy
 ExecStart=/usr/local/bin/caddy run --environ --config /etc/caddy/Caddyfile
 ExecReload=/usr/local/bin/caddy reload --config /etc/caddy/Caddyfile --force
+# If ports 80/443 are busy (e.g. another container), keep retrying until they are free.
+Restart=on-failure
+RestartSec=30s
 TimeoutStopSec=5s
 LimitNOFILE=1048576
 PrivateTmp=true
