@@ -10,10 +10,8 @@ const num = (v: unknown) => Number(v ?? 0);
 const r1 = (n: number) => Math.round(n * 10) / 10;
 const r0 = Math.round;
 
-export async function dashboardRoutes(app: FastifyInstance) {
-  app.get('/api/dashboard', { preHandler: app.auth }, async (req) => {
-    const { days } = q.parse(req.query);
-    const org = req.user.org;
+/** Dashboard metrics for one org over the last `days` calendar days (org timezone). Also used by the AI assistant. */
+export async function buildDashboard(org: string, days: number) {
     const tz = (await pool.query('SELECT timezone FROM organizations WHERE id = $1', [org])).rows[0]?.timezone ?? 'Asia/Kolkata';
 
     // Calendar days in the org's timezone, oldest first.
@@ -188,5 +186,8 @@ export async function dashboardRoutes(app: FastifyInstance) {
         by_fuel_type: [...fuelByType.entries()].map(([fuel, c]) => ({ fuel, cost: r0(c) })).sort((a, b) => b.cost - a.cost),
       },
     };
-  });
+}
+
+export async function dashboardRoutes(app: FastifyInstance) {
+  app.get('/api/dashboard', { preHandler: app.auth }, async (req) => buildDashboard(req.user.org, q.parse(req.query).days));
 }

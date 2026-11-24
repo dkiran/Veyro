@@ -132,3 +132,95 @@ test('dashboard: status, trips, behaviour events, fuel, tenant scoping', async (
   assert.equal(other.status.total, 0);
   assert.equal((await j(h, 'GET', '/api/dashboard?days=5')).statusCode, 400);
 });
+
+// ---------- assistant ----------
+function fakeClient(script: Array<(params: any) => any>) {
+  let i = 0; const seen: any[] = [];
+  const client: any = { beta: { messages: { stream(params: any) {
+    seen.push(structuredClone(params));
+    const msg = script[i++](params); const h: Record<string, (t: string) => void> = {};
+    return { on(ev: string, cb: any) { h[ev] = cb; return this; }, abort() {}, async finalMessage() { for (const b of msg.content) if (b.type === 'text') h.text?.(b.text); return msg; } };
+  } } } };
+  return { client, seen };
+}
+const sse = (payload: string) => payload.split('\n\n').filter((l) => l.startsWith('data: ')).map((l) => JSON.parse(l.slice(6)));
+
+test('assistant: not configured -> clear error event; requires auth', async () => {
+  const saved = process.env.ANTHROPIC_API_KEY; delete process.env.ANTHROPIC_API_KEY; delete process.env.ANTHROPIC_AUTH_TOKEN;
+  try {
+    const h = await signup();
+    assert.equal((await app.inject({ method: 'POST', url: '/api/assistant/chat', payload: { messages: [{ role: 'user', content: 'hi' }] } })).statusCode, 401);
+    assert.equal((await j(h, 'GET', '/api/assistant/status')).json().enabled, false);
+    const r = await j(h, 'POST', '/api/assistant/chat', { messages: [{ role: 'user', content: 'hi' }] });
+    assert.equal(sse(r.payload)[0].code, 'not_configured');
+    assert.equal((await j(h, 'POST', '/api/assistant/chat', { messages: [{ role: 'assistant', content: 'x' }] })).statusCode, 400);
+  } finally { if (saved) process.env.ANTHROPIC_API_KEY = saved; }
+});
+
+test('assistant: streams text, runs tools scoped to the caller\'s org, loops until end_turn', async () => {
+  const a = await signup(), b = await signup();
+  await j(a, 'POST', '/api/vehicles', { reg_number: 'AI11AA0001' });
+  let seenByModel = '';
+  const { client, seen } = fakeClient([
+    () => ({ stop_reason: 'tool_use', content: [{ type: 'text', text: 'Checking… ' }, { type: 'tool_use', id: 'tu_1', name: 'fleet_status', input: {} }, { type: 'tool_use', id: 'tu_2', name: 'find_vehicle', input: { query: 'AI11' } }] }),
+    (p) => { seenByModel = JSON.stringify(p.messages.at(-1)); return { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Done.' }] }; },
+  ]);
+  const app2 = await buildApp({ aiClient: () => client });
+  const call = (h: any) => app2.inject({ method: 'POST', url: '/api/assistant/chat', headers: h, payload: { messages: [{ role: 'user', content: 'where is AI11AA0001?' }] } });
+
+  const ra = sse((await call(a)).payload);
+  assert.deepEqual(ra.filter((e) => e.type === 'text').map((e) => e.text).join(''), 'Checking… Done.');
+  assert.deepEqual(ra.filter((e) => e.type === 'tool').map((e) => e.name), ['fleet_status', 'find_vehicle']);
+  assert.equal(ra.at(-1).type, 'done');
+  assert.ok(seenByModel.includes('AI11AA0001'), 'owner org sees its vehicle');
+  const last = seen[1].messages.at(-1);
+  assert.equal(last.role, 'user'); assert.equal(last.content.length, 2, 'both tool results returned in a single user message');
+  assert.equal(seen[0].tools.length, 6); assert.ok(seen[0].system.includes('read-only'));
+
+  // other tenant: same questions must not reveal org A's vehicle
+  seenByModel = '';
+  const { client: c2 } = fakeClient([
+    () => ({ stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 'x', name: 'find_vehicle', input: { query: 'AI11' } }] }),
+    (p) => { seenByModel = JSON.stringify(p.messages.at(-1)); return { stop_reason: 'end_turn', content: [{ type: 'text', text: 'ok' }] }; },
+  ]);
+  const app3 = await buildApp({ aiClient: () => c2 });
+  await app3.inject({ method: 'POST', url: '/api/assistant/chat', headers: b, payload: { messages: [{ role: 'user', content: 'x' }] } });
+  assert.ok(!seenByModel.includes('AI11AA0001'), 'other org must not see it');
+  assert.ok(seenByModel.includes('total_matches\\":0') || seenByModel.includes('"total_matches":0'));
+  await app2.close(); await app3.close();
+});
+
+test('assistant: invalid tool input becomes an error result the model can fix; API errors become error events', async () => {
+  const h = await signup();
+  let toolResult: any;
+  const { client } = fakeClient([
+    () => ({ stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 'bad', name: 'vehicle_trips', input: { days: 999 } }] }),
+    (p) => { toolResult = p.messages.at(-1).content[0]; return { stop_reason: 'end_turn', content: [{ type: 'text', text: 'ok' }] }; },
+  ]);
+  const app2 = await buildApp({ aiClient: () => client });
+  await app2.inject({ method: 'POST', url: '/api/assistant/chat', headers: h, payload: { messages: [{ role: 'user', content: 'x' }] } });
+  assert.equal(toolResult.is_error, true);
+
+  const boom: any = { beta: { messages: { stream() { return { on() { return this; }, abort() {}, async finalMessage() { throw new (await import('@anthropic-ai/sdk')).default.RateLimitError(429, {}, 'slow down', new Headers()); } }; } } } };
+  const app3 = await buildApp({ aiClient: () => boom });
+  const ev = sse((await app3.inject({ method: 'POST', url: '/api/assistant/chat', headers: h, payload: { messages: [{ role: 'user', content: 'x' }] } })).payload);
+  assert.equal(ev.at(-1).code, 'rate_limited');
+  await app2.close(); await app3.close();
+});
+
+test('vehicle image_url validation + trips list', async () => {
+  const h = await signup();
+  assert.equal((await j(h, 'POST', '/api/vehicles', { reg_number: 'IM11AA0001', image_url: 'javascript:alert(1)' })).statusCode, 400);
+  const ok = await j(h, 'POST', '/api/vehicles', { reg_number: 'IM11AA0001', image_url: 'https://example.com/truck.jpg' });
+  assert.equal(ok.statusCode, 201); assert.equal(ok.json().image_url, 'https://example.com/truck.jpg');
+  const blank = await j(h, 'PUT', `/api/vehicles/${ok.json().id}`, { reg_number: 'IM11AA0001', image_url: '' });
+  assert.equal(blank.json().image_url, null);
+
+  const d = (await j(h, 'POST', '/api/devices', { imei: imeiOf(), vehicle_id: ok.json().id })).json();
+  const t0 = Date.now() - 3600_000;
+  const positions = [0, 40, 60, 60].map((s, i) => ({ ts: new Date(t0 + i * 60_000).toISOString(), lat: 19, lng: 72.8 + i * 0.01, speed_kmh: s, ignition: true }));
+  await app.inject({ method: 'POST', url: '/api/ingest', headers: { 'x-device-key': d.api_key }, payload: { imei: d.imei, positions } });
+  const t = (await j(h, 'GET', '/api/trips?days=7')).json();
+  assert.equal(t.total, 1); assert.equal(t.rows[0].reg_number, 'IM11AA0001'); assert.ok(t.total_km > 2);
+  assert.equal((await j(await signup(), 'GET', '/api/trips?days=7')).json().total, 0);
+});

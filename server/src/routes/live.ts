@@ -6,7 +6,7 @@ import { liveStatus } from '../status.js';
 export async function liveRoutes(app: FastifyInstance) {
   app.get('/api/live/snapshot', { preHandler: app.auth }, async (req) => {
     const r = await pool.query(
-      `SELECT v.id AS vehicle_id, v.reg_number, v.name, v.type, d.name AS driver_name,
+      `SELECT v.id AS vehicle_id, v.reg_number, v.name, v.type, v.image_url, d.name AS driver_name,
               s.ts, s.lat, s.lng, s.speed_kmh, s.heading, s.ignition, s.odometer_km
          FROM vehicles v JOIN vehicle_state s ON s.vehicle_id = v.id
          LEFT JOIN drivers d ON d.id = v.driver_id

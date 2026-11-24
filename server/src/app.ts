@@ -10,6 +10,9 @@ import { liveRoutes } from './routes/live.js';
 import { historyRoutes } from './routes/history.js';
 import { ingestRoutes } from './routes/ingest.js';
 import { dashboardRoutes } from './routes/dashboard.js';
+import { assistantRoutes } from './routes/assistant.js';
+import { tripRoutes } from './routes/trips.js';
+import type { AiClient } from './assistant/chat.js';
 
 export interface AuthUser { uid: string; org: string; role: 'admin' | 'manager' | 'viewer' }
 declare module '@fastify/jwt' {
@@ -19,7 +22,7 @@ declare module 'fastify' {
   interface FastifyInstance { auth: (req: any, reply: any) => Promise<void>; adminOnly: (req: any, reply: any) => Promise<void> }
 }
 
-export async function buildApp() {
+export async function buildApp(opts: { aiClient?: () => AiClient } = {}) {
   const app = Fastify({ logger: process.env.NODE_ENV !== 'test' });
   await app.register(cors, { origin: true });
   await app.register(jwt, { secret: config.jwtSecret, sign: { expiresIn: '12h' } });
@@ -50,5 +53,7 @@ export async function buildApp() {
   await app.register(historyRoutes);
   await app.register(ingestRoutes);
   await app.register(dashboardRoutes);
+  await app.register(tripRoutes);
+  await app.register(assistantRoutes, { client: opts.aiClient });
   return app;
 }

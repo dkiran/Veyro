@@ -2,10 +2,11 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api';
 import { LANGUAGES, fmtDate } from '../i18n';
+import VehicleThumb from './VehicleThumb';
 
 type Opt = { value: string; label: string };
 interface Field { key: string; type: 'text' | 'number' | 'date' | 'select' | 'lang'; required?: boolean; options?: string[]; optionsFrom?: string; labelKey?: string; optionLabel?: string; readonlyOnEdit?: boolean }
-interface Col { key: string; label?: string; kind?: 'date' | 'enum' | 'secret' }
+interface Col { key: string; label?: string; kind?: 'date' | 'enum' | 'secret' | 'thumb' }
 
 function Master({ endpoint, titleKey, fields, cols, defaults }: { endpoint: string; titleKey: string; fields: Field[]; cols: Col[]; defaults?: Record<string, any> }) {
   const { t } = useTranslation();
@@ -46,6 +47,7 @@ function Master({ endpoint, titleKey, fields, cols, defaults }: { endpoint: stri
     try { await api(`/api/${endpoint}/${row.id}`, { method: 'DELETE' }); load(); } catch (e: any) { alert(e.body?.error ?? 'Error'); }
   }
   const cell = (r: any, c: Col) => {
+    if (c.kind === 'thumb') return <VehicleThumb url={r.image_url} type={r.type} size="sm" />;
     const v = r[c.key];
     if (v == null || v === '') return <span className="muted">—</span>;
     if (c.kind === 'date') return fmtDate(v);
@@ -103,9 +105,9 @@ function Master({ endpoint, titleKey, fields, cols, defaults }: { endpoint: stri
 
 export const Vehicles = () => (
   <Master endpoint="vehicles" titleKey="nav.vehicles" defaults={{ type: 'truck', fuel_type: 'diesel', status: 'active' }}
-    cols={[{ key: 'reg_number' }, { key: 'name' }, { key: 'type', kind: 'enum' }, { key: 'driver_name', label: 'driver' }, { key: 'device_imei', label: 'imei' }, { key: 'status', kind: 'enum' }]}
+    cols={[{ key: 'image', kind: 'thumb' }, { key: 'reg_number' }, { key: 'name' }, { key: 'type', kind: 'enum' }, { key: 'driver_name', label: 'driver' }, { key: 'device_imei', label: 'imei' }, { key: 'status', kind: 'enum' }]}
     fields={[
-      { key: 'reg_number', type: 'text', required: true }, { key: 'name', type: 'text' },
+      { key: 'reg_number', type: 'text', required: true }, { key: 'name', type: 'text' }, { key: 'image_url', type: 'text' },
       { key: 'type', type: 'select', required: true, options: ['car', 'truck', 'bus', 'van', 'bike', 'tractor', 'other'] },
       { key: 'make', type: 'text' }, { key: 'model', type: 'text' }, { key: 'year', type: 'number' },
       { key: 'fuel_type', type: 'select', required: true, options: ['diesel', 'petrol', 'cng', 'electric', 'hybrid', 'other'] },

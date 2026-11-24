@@ -4,6 +4,9 @@ import { pool } from '../db.js';
 
 const uuid = z.string().uuid();
 const optStr = z.string().trim().min(1).nullish().transform((v) => v ?? null);
+// Only http(s) image links (blocks javascript:/data: URLs); the UI falls back to a type icon if it can't load.
+const imageUrl = z.string().trim().max(2048).url().refine((u) => /^https?:\/\//i.test(u), 'must be an http(s) URL')
+  .nullish().or(z.literal('')).transform((v) => v || null);
 
 const driver = z.object({
   name: z.string().trim().min(1), phone: optStr, license_number: optStr,
@@ -18,6 +21,7 @@ const vehicle = z.object({
   make: optStr, model: optStr, year: z.number().int().min(1950).max(2100).nullish().transform((v) => v ?? null),
   fuel_type: z.enum(['diesel', 'petrol', 'cng', 'electric', 'hybrid', 'other']).default('diesel'),
   driver_id: uuid.nullish().transform((v) => v ?? null),
+  image_url: imageUrl,
   status: z.enum(['active', 'inactive', 'maintenance']).default('active'),
 });
 const device = z.object({

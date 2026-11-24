@@ -31,16 +31,25 @@ export default function History() {
 
   useEffect(() => {
     map.current = makeMap(el.current!); layer.current = L.layerGroup().addTo(map.current);
-    api('/api/vehicles').then((v) => { setVehicles(v); if (v[0]) setVid(v[0].id); });
+    api('/api/vehicles').then((v) => {
+      setVehicles(v);
+      const sp = new URLSearchParams(location.search), want = sp.get('vehicle');
+      const id = want && v.some((x: { id: string }) => x.id === want) ? want : v[0]?.id;
+      if (id) setVid(id);
+      if (want && id === want && sp.get('from') && sp.get('to') && !isNaN(+new Date(sp.get('from')!)) && !isNaN(+new Date(sp.get('to')!))) {
+        const f = toLocalInput(new Date(sp.get('from')!)), tt = toLocalInput(new Date(sp.get('to')!));
+        setFrom(f); setTo(tt); show(f, tt, id); // opened from the Trips page: show that route straight away
+      }
+    });
     return () => { map.current?.remove(); };
   }, []);
 
-  async function show(f = from, tt = to) {
-    if (!vid) return;
+  async function show(f = from, tt = to, v = vid) {
+    if (!v) return;
     setBusy(true); setPlaying(false);
     const qs = `from=${encodeURIComponent(new Date(f).toISOString())}&to=${encodeURIComponent(new Date(tt).toISOString())}`;
     try {
-      const [h, tr] = await Promise.all([api(`/api/vehicles/${vid}/history?${qs}`), api(`/api/vehicles/${vid}/trips?${qs}`)]);
+      const [h, tr] = await Promise.all([api(`/api/vehicles/${v}/history?${qs}`), api(`/api/vehicles/${v}/trips?${qs}`)]);
       setPts(h.points); setTotal(h.total); setTrips(tr); setIdx(0); setLoaded(true);
     } finally { setBusy(false); }
   }
