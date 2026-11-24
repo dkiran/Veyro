@@ -26,7 +26,10 @@ async function call(path: string, method = 'GET', body?: unknown, headers: Recor
 
 async function auth() {
   try { return (await call('/api/auth/signup', 'POST', { orgName: 'Demo Logistics', name: 'Demo Admin', email: EMAIL, password: PASSWORD })).token; }
-  catch { return (await call('/api/auth/login', 'POST', { email: EMAIL, password: PASSWORD })).token; }
+  catch (e: any) {
+    if (!String(e.message).includes(' 409 ')) console.error('signup failed:', e.message); // 409 = demo user already exists
+    return (await call('/api/auth/login', 'POST', { email: EMAIL, password: PASSWORD })).token;
+  }
 }
 
 interface Sim { imei: string; key: string; lat: number; lng: number; heading: number; speed: number; dest: [number, number]; t: number; stopUntil: number }
