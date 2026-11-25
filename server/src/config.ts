@@ -13,6 +13,15 @@ export const config = {
   // Browser origins allowed to call the API cross-origin. Dev: any. Production: none (same-origin via the proxy)
   // unless CORS_ORIGIN lists them, e.g. "https://track.veyrotrack.com".
   corsOrigin: (process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map((s) => s.trim()).filter(Boolean) : process.env.NODE_ENV === 'production' ? false : true) as boolean | string[],
+  // Email (ZeptoMail API) for website enquiries. See src/mail.ts.
+  mail: {
+    token: process.env.ZEPTOMAIL_TOKEN ?? '',
+    apiUrl: process.env.ZEPTOMAIL_API_URL ?? 'https://api.zeptomail.in/v1.1/email',
+    from: process.env.MAIL_FROM ?? '',
+    fromName: process.env.MAIL_FROM_NAME ?? 'Veyro Website',
+    // Where website enquiries are sent; comma-separated for several inboxes.
+    to: (process.env.ENQUIRY_MAIL_TO ?? '').split(',').map((s) => s.trim()).filter(Boolean),
+  },
   // A vehicle with no fix for this long is shown as offline.
   offlineAfterMs: 10 * 60_000,
   // A trip ends after the vehicle has been stationary this long (or ignition goes off).

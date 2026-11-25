@@ -12,6 +12,8 @@ import { ingestRoutes } from './routes/ingest.js';
 import { dashboardRoutes } from './routes/dashboard.js';
 import { assistantRoutes } from './routes/assistant.js';
 import { tripRoutes } from './routes/trips.js';
+import { enquiryRoutes } from './routes/enquiry.js';
+import type { Mailer } from './mail.js';
 import type { AiClient } from './assistant/chat.js';
 import fastifyStatic from '@fastify/static';
 import { existsSync } from 'node:fs';
@@ -25,7 +27,7 @@ declare module 'fastify' {
   interface FastifyInstance { auth: (req: any, reply: any) => Promise<void>; adminOnly: (req: any, reply: any) => Promise<void> }
 }
 
-export async function buildApp(opts: { aiClient?: () => AiClient; webDist?: string } = {}) {
+export async function buildApp(opts: { aiClient?: () => AiClient; webDist?: string; mailer?: Mailer } = {}) {
   const app = Fastify({ logger: process.env.NODE_ENV !== 'test' });
   await app.register(cors, { origin: config.corsOrigin });
   await app.register(jwt, { secret: config.jwtSecret, sign: { expiresIn: '12h' } });
@@ -58,6 +60,7 @@ export async function buildApp(opts: { aiClient?: () => AiClient; webDist?: stri
   await app.register(dashboardRoutes);
   await app.register(tripRoutes);
   await app.register(assistantRoutes, { client: opts.aiClient });
+  await app.register(enquiryRoutes, { mailer: opts.mailer });
 
   // Optionally serve the built web app (single-page app: unknown non-API paths return index.html).
   if (opts.webDist && existsSync(resolve(opts.webDist, 'index.html'))) {

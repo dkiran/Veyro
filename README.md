@@ -27,6 +27,22 @@ cd server && npm test                     # integration tests (needs Postgres)
 - **AI assistant** (chat bubble, bottom right): streaming chat that answers questions about your own fleet by calling read-only tools (`fleet_status`, `find_vehicle`, `vehicle_trips`, `fleet_summary`, `list_drivers`, `device_health`). Runs on the Claude API from the server (`server/src/assistant/`). Set `ANTHROPIC_API_KEY` in `server/.env` to enable it; without a key the bubble explains that it isn't set up. Safeguards: the company id comes from the login token, never from the model; tools are read-only; 20 messages/minute/user; input length limits. It replies in the user's language. It cannot change data yet; actions (send a WhatsApp alert, create a driver...) should be added as separate tools with a confirmation step.
 - **i18n**: English, Hindi, Marathi, Tamil, Telugu, Bengali, Arabic (RTL), Spanish. Add a language by dropping `web/src/i18n/locales/<code>.json` (copy `en.json`) and adding its native name in `i18n/index.ts`; missing keys fall back to English. Dates/numbers use `Intl`. Drivers carry a `preferred_language` for the future WhatsApp/voice agents.
 
+## Website enquiries (veyrotrack.com contact form)
+
+The public website's contact form posts to `POST /api/public/enquiry` (no login; the website's nginx forwards its same-origin `/api/demo` here). Each enquiry is validated, rate limited (5 per visitor per hour), checked against a honeypot field, and **saved first** in the `website_enquiries` table. The API then emails it to the sales inbox through the **ZeptoMail API** and records the result in `mail_status` (`sent`, `failed` with `mail_error`, or `not_configured`), so a lead is never lost to an email problem. Enquiries belong to Veyro itself and are not visible to customer organisations.
+
+Settings in `server/.env` (then `sudo systemctl restart veyro-api`):
+
+| Variable | Example | |
+|---|---|---|
+| `ZEPTOMAIL_TOKEN` | `Zoho-enczapikey …` | Send Mail token of a ZeptoMail Mail Agent |
+| `MAIL_FROM` | `noreply@veyrotrack.com` | Must be on a domain verified in ZeptoMail |
+| `MAIL_FROM_NAME` | `Veyro Website` | Optional |
+| `ENQUIRY_MAIL_TO` | `sales@veyrotrack.com` | Comma-separated for several inboxes |
+| `ZEPTOMAIL_API_URL` | `https://api.zeptomail.in/v1.1/email` | Default is the India data centre; use `api.zeptomail.com` for a US account |
+
+List recent enquiries: `psql "$DATABASE_URL" -c "SELECT created_at, interest, company, email, mail_status FROM website_enquiries ORDER BY id DESC LIMIT 20"`
+
 ## Known limits / next steps
 - Devices must speak HTTP/JSON. Native TCP protocols (GT06, Teltonika, AIS-140 — important in India) need a gateway that decodes and calls `ingestPositions()`.
 - `hub.ts` is in-process; use Postgres LISTEN/NOTIFY or Redis to run multiple API instances.
