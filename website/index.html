@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Veyro Track — one connection to every GPS platform</title>
+<meta name="description" content="Veyro Track connects GPS providers across India and gives shippers one consent-based live view of every vehicle they hire, whichever GPS platform or transporter it belongs to.">
+<meta property="og:title" content="Veyro Track — one connection to every GPS platform">
+<meta property="og:description" content="A single, consent-based source of live vehicle location for shippers, transporters and GPS providers.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Cpath d='M16 6l8 20-8-5-8 5z' fill='white'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#f7f8fb;--card:#fff;--ink:#0f172a;--muted:#5b6578;--line:#e3e7ef;--brand:#2563eb;--brand2:#0f766e;--hero1:#0b1226;--hero2:#14307a;--ok:#16a34a;--soon:#b45309;--soonbg:#fef3c7;--okbg:#dcfce7}
+@media (prefers-color-scheme:dark){:root{--bg:#0a0f1e;--card:#121a30;--ink:#e8ecf5;--muted:#9aa7bf;--line:#243050;--soon:#fbbf24;--soonbg:#3a2a07;--okbg:#0d2e1a;--ok:#4ade80}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font:16px/1.6 system-ui,-apple-system,"Segoe UI","Noto Sans","Noto Sans Devanagari",sans-serif;background:var(--bg);color:var(--ink)}
+a{color:inherit}.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+header.nav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:20px;height:64px}
+.logo{font-weight:750;font-size:19px;text-decoration:none;display:flex;gap:8px;align-items:center}.logo i{width:26px;height:26px;border-radius:7px;background:var(--brand);display:grid;place-items:center;color:#fff;font-style:normal;font-size:13px}
+.nav nav{margin-inline-start:auto;display:flex;gap:22px;align-items:center}.nav nav a{text-decoration:none;color:var(--muted);font-size:14px}.nav nav a:hover{color:var(--ink)}
+.btn{display:inline-block;padding:11px 20px;border-radius:10px;font-weight:600;text-decoration:none;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.sm{padding:8px 14px;font-size:14px}.btn:hover{filter:brightness(1.06)}
+.hero{background:radial-gradient(ellipse at 15% 0%,var(--hero2),transparent 60%),radial-gradient(ellipse at 90% 100%,#0f766e55,transparent 55%),var(--hero1);color:#fff;padding:72px 0 56px;overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:1.05fr 1fr;gap:40px;align-items:center}
+.eyebrow{display:inline-block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#93c5fd;border:1px solid #93c5fd55;border-radius:99px;padding:4px 12px;margin-bottom:18px}
+h1{font-size:clamp(32px,5vw,54px);line-height:1.08;margin:0 0 18px;letter-spacing:-.02em}h1 em{font-style:normal;background:linear-gradient(90deg,#60a5fa,#2dd4bf);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{font-size:18px;color:#c7d2e8;max-width:560px;margin:0 0 26px}.hero .cta{display:flex;gap:12px;flex-wrap:wrap}.hero .btn:not(.primary){background:transparent;color:#fff;border-color:#ffffff40}
+.diagram{width:100%;height:auto}.diagram text{font:12px system-ui,sans-serif;fill:#dbe5ff}.diagram .hub text{font-weight:700;font-size:15px;fill:#fff}
+.flow{stroke:#60a5fa;stroke-width:1.6;fill:none;stroke-dasharray:5 7;animation:flow 1.4s linear infinite}.flow.out{stroke:#2dd4bf}@keyframes flow{to{stroke-dashoffset:-24}}
+.pulse{animation:pulse 2.4s ease-in-out infinite;transform-origin:320px 180px}@keyframes pulse{0%,100%{opacity:.25;transform:scale(1)}50%{opacity:.55;transform:scale(1.12)}}
+@media (prefers-reduced-motion:reduce){.flow,.pulse{animation:none}}
+section{padding:68px 0}section h2{font-size:clamp(26px,3.4vw,36px);line-height:1.15;margin:0 0 12px;letter-spacing:-.01em}section .sub{color:var(--muted);max-width:680px;margin:0 0 34px;font-size:17px}
+.grid{display:grid;gap:18px}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px}.card h3{margin:0 0 8px;font-size:18px}.card p{margin:0;color:var(--muted);font-size:15px}
+.num{width:34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700;margin-bottom:14px}
+.alt{background:color-mix(in srgb,var(--card) 60%,var(--bg))}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:18px}.compare .card{text-align:center}.compare b{font-size:38px;display:block;line-height:1.1}.compare .bad b{color:#dc2626}.compare .good b{color:var(--ok)}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;margin-inline-start:6px;vertical-align:middle}.tag.now{background:var(--okbg);color:var(--ok)}.tag.soon{background:var(--soonbg);color:var(--soon)}
+.feat{display:flex;gap:12px;align-items:flex-start}.feat span.ic{font-size:22px;line-height:1.2}
+pre{background:#0b1226;color:#d6e2ff;border-radius:14px;padding:18px;overflow:auto;font:13px/1.55 ui-monospace,Menlo,Consolas,monospace;margin:0}pre .k{color:#7dd3fc}pre .s{color:#86efac}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:10px}summary{cursor:pointer;font-weight:600}details p{color:var(--muted);margin:10px 0 0}
+.contact .card{display:flex;flex-direction:column;gap:10px}.contact .btn{align-self:flex-start}
+footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-size:14px}footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.note{font-size:12px;color:var(--muted);margin-top:10px}
+@media (max-width:900px){.hero .wrap{grid-template-columns:1fr}.g3{grid-template-columns:1fr}.g2,.compare{grid-template-columns:1fr}.nav nav a:not(.btn){display:none}section{padding:52px 0}.hero{padding:48px 0 36px}}
+</style>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="logo" href="#top"><i>▲</i>Veyro Track</a>
+  <nav aria-label="Main">
+    <a href="#how">How it works</a><a href="#who">Who it's for</a><a href="#trust">Privacy</a><a href="#api">API</a><a href="#contact">Contact</a>
+    <a class="btn sm" href="https://track.veyrotrack.com">Log in</a>
+  </nav>
+</div></header>
+
+<main id="top">
+<div class="hero"><div class="wrap">
+  <div>
+    <span class="eyebrow">GPS data aggregator · early access</span>
+    <h1>One connection to <em>every GPS platform</em> in India.</h1>
+    <p class="lead">Hire trucks from many transporters, each using a different GPS provider? Veyro Track brings all of them into a single live view and a single API, with the transporter's consent, on any vehicle, whichever tracker it carries.</p>
+    <div class="cta"><a class="btn primary" href="#contact">Become a pilot partner</a><a class="btn" href="#how">See how it works</a></div>
+  </div>
+  <svg class="diagram" viewBox="0 0 640 360" role="img" aria-label="Many GPS vendors feed Veyro, which serves shippers">
+    <g class="flow-lines">
+      <path class="flow" d="M110 50 C220 50 230 180 274 180"/><path class="flow" d="M110 115 C200 115 235 180 274 180"/><path class="flow" d="M110 180 L274 180"/>
+      <path class="flow" d="M110 245 C200 245 235 180 274 180"/><path class="flow" d="M110 310 C220 310 230 180 274 180"/>
+      <path class="flow out" d="M366 180 C420 180 440 90 520 90"/><path class="flow out" d="M366 180 L520 180"/><path class="flow out" d="M366 180 C420 180 440 270 520 270"/>
+    </g>
+    <circle class="pulse" cx="320" cy="180" r="62" fill="#2563eb"/>
+    <g class="hub"><circle cx="320" cy="180" r="48" fill="#2563eb" stroke="#93c5fd" stroke-width="2"/><text x="320" y="185" text-anchor="middle">Veyro</text></g>
+    <g fill="#14307a" stroke="#60a5fa" stroke-width="1.2">
+      <rect x="20" y="34" width="90" height="32" rx="8"/><rect x="20" y="99" width="90" height="32" rx="8"/><rect x="20" y="164" width="90" height="32" rx="8"/><rect x="20" y="229" width="90" height="32" rx="8"/><rect x="20" y="294" width="90" height="32" rx="8"/>
+    </g>
+    <g text-anchor="middle"><text x="65" y="55">GPS vendor A</text><text x="65" y="120">GPS vendor B</text><text x="65" y="185">GPS vendor C</text><text x="65" y="250">GPS vendor D</text><text x="65" y="315">GPS vendor …</text></g>
+    <g fill="#0f4f4a" stroke="#2dd4bf" stroke-width="1.2"><rect x="520" y="74" width="100" height="32" rx="8"/><rect x="520" y="164" width="100" height="32" rx="8"/><rect x="520" y="254" width="100" height="32" rx="8"/></g>
+    <g text-anchor="middle"><text x="570" y="95">Shipper 1</text><text x="570" y="185">Shipper 2</text><text x="570" y="275">Shipper 3</text></g>
+    <text x="320" y="262" text-anchor="middle" fill="#93c5fd">transporter-approved access</text>
+  </svg>
+</div></div>
+
+<section id="problem"><div class="wrap">
+  <h2>Today, every GPS platform is a separate integration.</h2>
+  <p class="sub">A shipper hiring 100 trucks from different transporters may need to log in to a dozen tracking platforms and build a dozen integrations. When a vehicle moves to the next customer, it all starts again.</p>
+  <div class="compare">
+    <div class="card bad"><b>Many</b><p>platforms, logins and integrations to follow one fleet, and different data formats in each.</p></div>
+    <div class="card good"><b>One</b><p>connection to Veyro. One dashboard, one API, one data format for every vehicle you are allowed to see.</p></div>
+  </div>
+</div></section>
+
+<section id="how" class="alt"><div class="wrap">
+  <h2>How it works</h2>
+  <p class="sub">No new hardware. Vehicles keep the tracker they already have.</p>
+  <div class="grid g3">
+    <div class="card"><div class="num">1</div><h3>Connect</h3><p>A GPS provider sends us data by API, or a transporter points their existing devices to also send a copy to Veyro. We translate every provider's format into one.</p></div>
+    <div class="card"><div class="num">2</div><h3>Approve</h3><p>The transporter decides who can see each vehicle, for which trip or contract, and for how long. Access ends automatically, and can be withdrawn at any time.</p></div>
+    <div class="card"><div class="num">3</div><h3>Track</h3><p>Shippers see every approved vehicle on one live map and one API, whichever GPS provider it uses. If the vehicle is hired by someone else next week, access follows the new approval.</p></div>
+  </div>
+</div></section>
+
+<section id="who"><div class="wrap">
+  <h2>Built for three kinds of partners</h2>
+  <p class="sub">Each side gets something concrete.</p>
+  <div class="grid g3">
+    <div class="card"><h3>Shippers &amp; e-commerce</h3><p>One integration instead of dozens. Live location, trip status and ETA for every hired vehicle, with an audit trail of who saw what.</p></div>
+    <div class="card"><h3>Transporters &amp; fleet owners</h3><p>Keep the GPS provider you have. Share a vehicle with a customer only when you choose, see exactly who viewed it, and win more work from shippers who need visibility.</p></div>
+    <div class="card"><h3>GPS providers</h3><p>Connect once through a simple, documented interface and reach shippers you do not serve today, without giving up your customer relationship.</p></div>
+  </div>
+</div></section>
+
+<section class="alt" id="features"><div class="wrap">
+  <h2>The platform behind it</h2>
+  <p class="sub">The fleet platform is live today. The aggregator is in early access with pilot partners.</p>
+  <div class="grid g3">
+    <div class="feat"><span class="ic">📍</span><div><b>Live tracking &amp; history</b><span class="tag now">Available</span><p class="note" style="margin:4px 0 0">Real-time map, route playback, automatic trips.</p></div></div>
+    <div class="feat"><span class="ic">📊</span><div><b>Fleet dashboard</b><span class="tag now">Available</span><p class="note" style="margin:4px 0 0">Utilization, trips, driver behaviour, fuel estimates.</p></div></div>
+    <div class="feat"><span class="ic">🤖</span><div><b>AI assistant</b><span class="tag now">Available</span><p class="note" style="margin:4px 0 0">Ask about your fleet in your own language.</p></div></div>
+    <div class="feat"><span class="ic">🔗</span><div><b>Multi-provider aggregation</b><span class="tag soon">Early access</span><p class="note" style="margin:4px 0 0">One view across GPS platforms, with consent.</p></div></div>
+    <div class="feat"><span class="ic">🧩</span><div><b>Shipper API &amp; webhooks</b><span class="tag soon">Early access</span><p class="note" style="margin:4px 0 0">Location, trips and events for your own systems.</p></div></div>
+    <div class="feat"><span class="ic">🔔</span><div><b>Geofences &amp; alerts, WhatsApp, voice</b><span class="tag soon">Coming soon</span><p class="note" style="margin:4px 0 0">Alerts where your teams already are, in Indian languages.</p></div></div>
+  </div>
+</div></section>
+
+<section id="trust"><div class="wrap">
+  <h2>Built around consent</h2>
+  <p class="sub">Location data is sensitive. The design starts from who is allowed to see it.</p>
+  <div class="grid g2">
+    <div class="card"><h3>Transporter decides</h3><p>Nobody sees a vehicle until its owner approves, per shipper and per time window. Approvals expire on their own.</p></div>
+    <div class="card"><h3>Only what is needed</h3><p>Shippers see vehicle location and trip status during the approved period, not driver personal details and not history from before or after it.</p></div>
+    <div class="card"><h3>Every view is logged</h3><p>Transporters can see who looked at which vehicle and when, and withdraw access at any moment.</p></div>
+    <div class="card"><h3>Your data stays yours</h3><p>GPS providers and transporters remain the source of their data. We aggregate it, we do not claim it.</p></div>
+  </div>
+</div></section>
+
+<section id="api" class="alt"><div class="wrap">
+  <h2>One API for every vehicle</h2>
+  <p class="sub">A preview of the shipper API. Details may change before launch.</p>
+  <div class="grid g2">
+<pre><span class="k">GET</span> /v1/vehicles/<span class="s">MH12AB1234</span>/location
+<span class="k">Authorization:</span> Bearer &lt;your-api-key&gt;
+
+{
+  "registration": "MH12AB1234",
+  "lat": 19.0760, "lng": 72.8777,
+  "speed_kmh": 54, "ignition": true,
+  "updated_at": "2026-12-01T09:41:07Z",
+  "source": "provider-c"
+}</pre>
+    <div class="card"><h3>Same call, any provider</h3><p>You never need to know which GPS platform a truck uses. Ask for a registration number you have been approved for, and get the same format every time. Webhooks and live streaming will notify your systems of trip and delay events.</p></div>
+  </div>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <h2>Questions</h2><div style="height:14px"></div>
+  <details><summary>Do vehicles need new hardware?</summary><p>No. Vehicles keep their current tracker. Data reaches us either from the GPS provider or by the transporter adding Veyro as a second destination on the device.</p></details>
+  <details><summary>Which GPS providers are connected?</summary><p>We are onboarding the first pilot providers now. If you are a GPS provider, we would like to hear from you.</p></details>
+  <details><summary>Who can see my vehicles?</summary><p>Only shippers you approve, only for the period you choose. You can see every view and withdraw access whenever you like.</p></details>
+  <details><summary>What does it cost?</summary><p>Pilot partners get early-access terms. Contact us and we will share them.</p></details>
+</div></section>
+
+<section id="contact" class="alt contact"><div class="wrap">
+  <h2>Join the pilot</h2>
+  <p class="sub">Tell us which side you are on. We will reply with next steps.</p>
+  <div class="grid g3">
+    <div class="card"><h3>I am a shipper</h3><p>One view of vehicles from all your transporters.</p><a class="btn primary" href="mailto:hello@veyrotrack.com?subject=Pilot%20-%20Shipper">Email us</a></div>
+    <div class="card"><h3>I am a transporter</h3><p>Keep your GPS provider, win more visibility-driven work.</p><a class="btn primary" href="mailto:hello@veyrotrack.com?subject=Pilot%20-%20Transporter">Email us</a></div>
+    <div class="card"><h3>I am a GPS provider</h3><p>Connect once and reach more shippers.</p><a class="btn primary" href="mailto:hello@veyrotrack.com?subject=Pilot%20-%20GPS%20provider">Email us</a></div>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap"><span>© Veyro Track</span><span><a href="https://track.veyrotrack.com">Log in to the platform</a></span></div></footer>
+</body>
+</html>
