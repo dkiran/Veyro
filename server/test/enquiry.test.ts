@@ -18,6 +18,14 @@ after(async () => { await app.close(); await pool.end(); });
 
 let n = 0;
 const ip = () => `203.0.113.${++n}`;
+const settled = async (company: string) => {
+  for (let i = 0; i < 50; i++) {
+    const r = (await pool.query('SELECT * FROM website_enquiries WHERE company = $1', [company])).rows[0];
+    if (r && r.mail_status !== 'pending') return r;
+    await new Promise((res) => setTimeout(res, 20));
+  }
+  throw new Error('email not settled');
+};
 const post = (payload: any, from = ip()) => app.inject({ method: 'POST', url: '/api/public/enquiry', headers: { 'x-forwarded-for': `10.0.0.9, ${from}` }, payload });
 const valid = (extra: any = {}) => ({ interest: 'pilot', name: 'Asha Rao', company: `Acme ${Math.random()}`, email: 'asha@example.com', phone: '+91 90000 00000', fleetSize: '11–50', industry: 'Construction', message: 'Two tippers\nplease', ...extra });
 
@@ -25,7 +33,7 @@ test('saves the enquiry and emails the sales inbox', async () => {
   const body = valid();
   const r = await post(body, '198.51.100.7');
   assert.equal(r.statusCode, 201);
-  const row = (await pool.query('SELECT * FROM website_enquiries WHERE company = $1', [body.company])).rows[0];
+  const row = await settled(body.company);
   assert.equal(row.interest, '30-day pilot');
   assert.equal(row.ip, '198.51.100.7');
   assert.equal(row.mail_status, 'sent');
@@ -38,7 +46,9 @@ test('saves the enquiry and emails the sales inbox', async () => {
 });
 
 test('escapes HTML in the email', async () => {
-  await post(valid({ name: '<script>x</script>' }));
+  const x = valid({ name: '<script>x</script>' });
+  await post(x);
+  await settled(x.company);
   assert.ok(!sent.at(-1)!.html.includes('<script>'));
 });
 
@@ -64,7 +74,7 @@ test('email failure keeps the lead and records the error', async () => {
   failNext = true;
   const body = valid();
   assert.equal((await post(body)).statusCode, 201);
-  const row = (await pool.query('SELECT mail_status, mail_error FROM website_enquiries WHERE company = $1', [body.company])).rows[0];
+  const row = await settled(body.company);
   assert.equal(row.mail_status, 'failed');
   assert.match(row.mail_error, /boom/);
 });

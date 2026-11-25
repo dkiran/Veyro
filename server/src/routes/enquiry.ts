@@ -46,21 +46,7 @@ export async function enquiryRoutes(app: FastifyInstance, opts: { mailer?: Maile
   const mailer = opts.mailer ?? sendZeptoMail;
   const canMail = () => Boolean(opts.mailer) || mailConfigured();
 
-  app.post('/api/public/enquiry', { bodyLimit: 32 * 1024 }, async (req, reply) => {
-    const raw = (req.body ?? {}) as Record<string, unknown>;
-    if (typeof raw.website === 'string' && raw.website.trim()) return { ok: true }; // bot: pretend success, store nothing
-    const ip = clientIp(req);
-    if (limited(ip)) return reply.code(429).send({ error: 'rate_limited' });
-    const e = body.parse(raw);
-
-    const { rows } = await pool.query(
-      `INSERT INTO website_enquiries (interest, name, company, email, phone, fleet_size, industry, message, ip, mail_status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id, created_at`,
-      [INTERESTS[e.interest], e.name, e.company, e.email, e.phone, e.fleetSize || null, e.industry || null, e.message || null, ip, canMail() ? 'pending' : 'not_configured'],
-    );
-    const id = rows[0].id as string;
-
-    if (canMail() && config.mail.to.length) {
+  async function notify(id: string, e: z.infer<typeof body>) {
       const fields: [string, string][] = [
         ['Interested in', INTERESTS[e.interest]], ['Name', e.name], ['Company', e.company], ['Email', e.email], ['Phone', e.phone],
         ['Fleet size', e.fleetSize ?? ''], ['Industry', e.industry ?? ''], ['Message', e.message ?? ''], ['Enquiry no.', String(id)],
@@ -81,6 +67,23 @@ export async function enquiryRoutes(app: FastifyInstance, opts: { mailer?: Maile
         await pool.query(`UPDATE website_enquiries SET mail_status = 'failed', mail_error = $2 WHERE id = $1`, [id, String(err?.message ?? err).slice(0, 500)]);
       }
     }
+
+  app.post('/api/public/enquiry', { bodyLimit: 32 * 1024 }, async (req, reply) => {
+    const raw = (req.body ?? {}) as Record<string, unknown>;
+    if (typeof raw.website === 'string' && raw.website.trim()) return { ok: true }; // bot: pretend success, store nothing
+    const ip = clientIp(req);
+    if (limited(ip)) return reply.code(429).send({ error: 'rate_limited' });
+    const e = body.parse(raw);
+
+    const { rows } = await pool.query(
+      `INSERT INTO website_enquiries (interest, name, company, email, phone, fleet_size, industry, message, ip, mail_status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id, created_at`,
+      [INTERESTS[e.interest], e.name, e.company, e.email, e.phone, e.fleetSize || null, e.industry || null, e.message || null, ip, canMail() ? 'pending' : 'not_configured'],
+    );
+    const id = rows[0].id as string;
+
+    // Answer the visitor straight away; the email is sent in the background and its outcome recorded.
+    if (canMail() && config.mail.to.length) void notify(id, e);
     return reply.code(201).send({ ok: true });
   });
 }
